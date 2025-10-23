@@ -38,10 +38,10 @@ public class MainController {
             DeckOfCards deck = new DeckOfCards();
             Dealer dealer = new Dealer();
             Jogador jogador1 = new Jogador("Jogador 1");
-            //Jogador jogador2 = new Jogador("Jogador 2");
+            JogadorIA ia = new JogadorIA();
 
 
-            blackJack bj = new blackJack(deck, dealer, jogador1);
+            blackJack bj = new blackJack(deck, dealer, jogador1,ia);
             bj.startGUI(stage);
 
         });

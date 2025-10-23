@@ -1,5 +1,10 @@
 package com.BlackJack.BlackJackFX;
 
+import javafx.animation.Animation;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.animation.PauseTransition;
 import javafx.geometry.Rectangle2D;
@@ -11,12 +16,15 @@ import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class blackJack {
 
     private DeckOfCards deck;
     private Dealer dealer;
     private Jogador jogador1;
-    // private Jogador jogador2;
+    private JogadorIA ia;
+    private  String iaRespoista;
 
     public blackJack(DeckOfCards deck, Dealer dealer, Jogador jogador1) {
         this.deck = deck;
@@ -25,11 +33,11 @@ public class blackJack {
         this.deck.shuffle();
     }
 
-    public blackJack(DeckOfCards deck, Dealer dealer, Jogador jogador1, Jogador jogador2) {
+    public blackJack(DeckOfCards deck, Dealer dealer, Jogador jogador1, JogadorIA ia) {
         this.deck = deck;
         this.dealer = dealer;
         this.jogador1 = jogador1;
-        // this.jogador2 = jogador2;
+        this.ia=ia;
         this.deck.shuffle();
     }
 
@@ -50,6 +58,12 @@ public class blackJack {
         jogadorCartas.layoutXProperty().bind(jogoLayout.widthProperty().multiply(0.28)); // ajuste para seu layout
         jogadorCartas.layoutYProperty().bind(jogoLayout.heightProperty().multiply(0.73));
 
+
+        HBox iaCartas = new HBox(10);
+        iaCartas.layoutXProperty().bind(jogoLayout.widthProperty().multiply(0.05)); // ajuste para seu layout
+        iaCartas.layoutYProperty().bind(jogoLayout.heightProperty().multiply(0.43));
+
+
         // Botões Hit/Stand
         Button hit = new Button("Hit");
         Button stand = new Button("Stand");
@@ -60,7 +74,7 @@ public class blackJack {
         botoes.layoutXProperty().bind(jogoLayout.widthProperty().multiply(0.7));
         botoes.layoutYProperty().bind(jogoLayout.heightProperty().multiply(1.08));
 
-        jogoLayout.getChildren().addAll(dealerCartas, jogadorCartas, botoes);
+        jogoLayout.getChildren().addAll(dealerCartas, jogadorCartas,iaCartas, botoes);
 
         Scene jogoScene = new Scene(jogoLayout, screenBounds.getWidth(), screenBounds.getHeight());
         jogoScene.getStylesheets().add(getClass().getResource("/css/style.css").toExternalForm());
@@ -77,7 +91,7 @@ public class blackJack {
         Label status = new Label();
         status.getStyleClass().add("status");
         status.layoutXProperty().bind(jogoLayout.widthProperty().multiply(0)); // ajuste para seu layout
-        status.layoutYProperty().bind(jogoLayout.heightProperty().multiply(0.1));
+        status.layoutYProperty().bind(jogoLayout.heightProperty().multiply(0.15));
         jogoLayout.getChildren().add(status);
 
         Button novaRodada = new Button("Nova Rodada");
@@ -93,7 +107,7 @@ public class blackJack {
 
             pontuacao.setText(
                     jogador1.getNome() + ": " + jogador1.getPontos() + " pontos\n" +
-                            "Dealer: " + pontosDealer + " pontos");
+                            "Dealer: " + pontosDealer + " pontos\n"+"JogadorIA :"+ia.getPontos()+" pontos\n");
         };
 
         Runnable jogando = () -> {
@@ -118,6 +132,11 @@ public class blackJack {
             delay2.setOnFinished(e -> {
                 jogador1.Hit(deck.dealCard());
                 jogador1.mostrarMao(jogadorCartas);
+
+                ia.Hit(deck.dealCard());
+                ia.mostrarMao(iaCartas);
+
+
                 atualizaponto.run();
                 delay3.play();
             });
@@ -136,6 +155,9 @@ public class blackJack {
                 jogador1.Hit(deck.dealCard());
                 jogador1.mostrarMao(jogadorCartas);
 
+                ia.Hit(deck.dealCard());
+                ia.mostrarMao(iaCartas);
+
                 atualizaponto.run();
             });
 
@@ -146,48 +168,115 @@ public class blackJack {
                 jogador1.Hit(deck.dealCard());
                 jogador1.mostrarMao(jogadorCartas);
                 atualizaponto.run();
+
+                boolean turnoFinalizado = false;
+
                 if (jogador1.getPontos() == 21) {
                     status.setText(jogador1.getNome() + " fez Black Jack!");
-                    hit.setDisable(true);
-                    dealer.mostrarMao(dealerCartas);
-                    stand.setDisable(true);
-                    novaRodada.setDisable(false);
-                }
-                if (jogador1.getPontos() > 21) {
+                    turnoFinalizado = true;
+                } else if (jogador1.getPontos() > 21) {
                     status.setText(jogador1.getNome() + " estourou! Pontos: " + jogador1.getPontos());
-                    dealer.mostrarMao(dealerCartas);
+                    turnoFinalizado = true;
+                }
+
+                if (turnoFinalizado) {
                     hit.setDisable(true);
-                    dealer.setTurnoDealer(true);
-                    dealer.mostrarMao(dealerCartas);
-                    atualizaponto.run();
+                    novaRodada.setDisable(true);
+                    stand.fire();
                     stand.setDisable(true);
-                    novaRodada.setDisable(false);
-                } else if (jogador1.getPontos() == 21) {
-                    status.setText(jogador1.getNome() + " fez Black Jack!");
-                    hit.setDisable(true);
-                    stand.setDisable(true);
-                    novaRodada.setDisable(false);
                 }
             });
 
-            stand.setOnAction(e -> {
+            Runnable turnoDealer = () ->{
                 dealer.setTurnoDealer(true);
                 dealer.mostrarMao(dealerCartas);
                 atualizaponto.run();
 
-                dealer.mostrarMao(dealerCartas);
-                if (jogador1.getPontos() != 21) {
-                    while (dealer.getPontos() < jogador1.getPontos()) {
+                // Determinar alvo do dealer: maior ponto entre jogadores que não estouraram
+                int pontoAlvo = 0;
+
+                if (jogador1.getPontos() <= 21) pontoAlvo = jogador1.getPontos();
+                if (ia.getPontos() <= 21 && ia.getPontos() > pontoAlvo) pontoAlvo = ia.getPontos();
+
+                // Se todos estouraram, dealer não precisa jogar
+                if (pontoAlvo == 0) {
+                    status.setText("Todos os jogadores estouraram! Dealer vence automaticamente.");
+                } else {
+                    // Dealer joga enquanto estiver abaixo do alvo e abaixo de 21
+                    while (dealer.getPontos() < pontoAlvo && dealer.getPontos() < 21) {
                         dealer.Hit(deck.dealCard());
                         dealer.mostrarMao(dealerCartas);
                         atualizaponto.run();
                     }
+
+                    // Determinar resultado
+                    if (dealer.getPontos() > 21) {
+                        status.setText("Dealer estourou! Jogadores que não estouraram vencem.");
+                    } else if (dealer.getPontos() == pontoAlvo) {
+                        status.setText("Empate com o maior jogador! Dealer: " + dealer.getPontos());
+                    } else if (dealer.getPontos() > pontoAlvo) {
+                        status.setText("Dealer venceu! Dealer: " + dealer.getPontos());
+                    } else {
+                        status.setText("Dealer parou abaixo do alvo. Dealer: " + dealer.getPontos());
+                    }
                 }
-                status.setText("Turno do Dealer finalizado. Dealer: " + dealer.getPontos() + " pontos.");
+
+                // Atualiza interface
                 hit.setDisable(true);
                 stand.setDisable(true);
                 novaRodada.setDisable(false);
+                dealer.setTurnoDealer(false);
+
+            };
+
+            stand.setOnAction(e -> {
+                hit.setDisable(true);
+                stand.setDisable(true);
+                atualizaponto.run();
+
+                int maxJogadasIA = 5;
+
+                new Thread(() -> {
+                    int jogadas = 0;
+
+                    while (jogadas < maxJogadasIA && ia.getPontos() < 21) {
+
+                        // Chama a IA para decidir a jogada
+                        String iaResposta = ia.sendIA(jogador1.getMao(), dealer.cartadealer())
+                                .trim()
+                                .toLowerCase();
+
+                        System.out.println("IA respondeu: " + iaResposta);
+
+                        // Atualiza a GUI
+                        Platform.runLater(() -> {
+                            if (iaResposta.equals("h")) {
+                                ia.Hit(deck.dealCard());
+                                ia.mostrarMao(iaCartas);
+                                atualizaponto.run();
+                            }
+                        });
+
+                        jogadas++;
+
+                        // Pequena pausa para não sobrecarregar a IA
+                        try { Thread.sleep(1000); } catch (InterruptedException ex) { ex.printStackTrace(); }
+
+                        if (iaResposta.equals("s")) break; // IA decidiu parar
+                    }
+
+                    // Quando a IA termina, atualiza a GUI e chama o dealer
+                    Platform.runLater(() -> {
+                        novaRodada.setDisable(false);
+                        status.setText("Turno da IA finalizado. Pontos IA: " + ia.getPontos());
+                        turnoDealer.run();
+                    });
+
+                }).start();
             });
+
+
+
 
         };
 
@@ -196,6 +285,7 @@ public class blackJack {
             deck = new DeckOfCards();
             deck.shuffle();
             jogador1.resetMao();
+            ia.resetMao();
             dealer.resetMao();
             dealer.setTurnoDealer(false);
             status.setText("");
@@ -203,6 +293,7 @@ public class blackJack {
             stand.setDisable(false);
             dealerCartas.getChildren().clear();
             jogadorCartas.getChildren().clear();
+            iaCartas.getChildren().clear();
             atualizaponto.run();
             jogando.run();
         });

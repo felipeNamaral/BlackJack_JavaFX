@@ -52,6 +52,12 @@ public class Dealer extends Jogador {
         turnoDealer = valor;
     }
 
+    public  Card cartadealer()
+    {
+        return getMao().getFirst();
+    }
+
+
     public int getPontuacaoParcial() {
         if (getMao().isEmpty()) return 0;
 
