@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=BBH+Sans+Bartle&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+
+.root {
+    -fx-background-image: url("/images/poke.jpg");
+    -fx-background-size: cover;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+    
+}
+
+.button {
+    -fx-background-color: #C41E3A;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 20px;
+    -fx-font-family: "BBH Sans Bartle", sans-serif;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 5, 0, 0, 3);
+    -fx-translate-y: -150px; /* sobe o texto */
+    -fx-translate-x: -500px;
+
+    -fx-pref-width: 250px;
+    -fx-pref-height: 80px;
+}
+
+.button:hover {
+    -fx-background-color: #560c0c;
+}
+.vbox {
+    -fx-alignment: center; 
+    -fx-spacing: 20px;
+    -fx-padding: 50px 0 0 0; 
+}
+
+.label {
+    -fx-translate-y: -150px; 
+    -fx-translate-x: 290px;
+    -fx-text-fill: gold;  /* cor principal */
+    -fx-font-size: 200px;
+    -fx-font-weight: heavy;
+    -fx-font-family: "Playfair Display", serif;
+    -fx-text-alignment: center;
+
+    /* sombra para borda preta */
+-fx-effect: dropshadow(gaussian, rgb(0, 0, 0), 4, 0.7, 0, 0)
+            , dropshadow(three-pass-box, rgb(0, 0, 0), 5, 0, 0, 8)
+            , innershadow(gaussian, rgb(0, 0, 0), 4, 0.7, 0, 0);
+}
+
+
+.jogoLayout{
+     -fx-background-color: black;
+    -fx-background-image: url("/images/mesa.png");
+    -fx-background-size: contain;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+}
+
+
+.botoesLayout{
+
+}
+
+.botao{
+    -fx-alignment: center;      
+    -fx-background-color: #C41E3A;
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 10px;
+    -fx-font-family: "BBH Sans Bartle", sans-serif;
+    -fx-background-radius: 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 5, 0, 0, 3);
+    -fx-pref-width: 150px;
+    -fx-pref-height: 50px;
+
+}
+
+
+.dealerCartas{
+
+}
+
+.status{
+    -fx-translate-y: 0px; 
+    -fx-translate-x: 0px;
+    -fx-text-fill: white;  
+    -fx-font-size: 30px;
+    -fx-font-weight: bold;
+    -fx-font-family: "Arial", sans-serif;
+    
+}
