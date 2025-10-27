@@ -54,7 +54,7 @@ public class Dealer extends Jogador {
 
     public  Card cartadealer()
     {
-        return getMao().getFirst();
+        return getMao().get(0);
     }
 
 

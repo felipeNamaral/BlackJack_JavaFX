@@ -246,7 +246,7 @@ public class blackJack {
                                 .trim()
                                 .toLowerCase();
 
-                        System.out.println("IA respondeu: " + iaResposta);
+
 
                         // Atualiza a GUI
                         Platform.runLater(() -> {

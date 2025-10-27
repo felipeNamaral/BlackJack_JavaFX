@@ -19,6 +19,7 @@ public class JogadorIA extends Jogador{
     }
 
     public String sendIA(List<Card> jogadormao, Card cartaDealer){
+        System.out.println("vez da ia:");
         try {
             String maoFormatada = jogadormao.stream()
                     .map(Card::toString)
@@ -35,7 +36,7 @@ public class JogadorIA extends Jogador{
                     gamestatus,
                     null
             );
-
+            System.out.println("IA respondeu: " + response.text());
             return response.text().trim().toLowerCase();
 
         } catch (com.google.genai.errors.ServerException se) {
